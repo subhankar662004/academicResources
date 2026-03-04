@@ -58,6 +58,11 @@ app.use('/api/resources', resourceRoutes(upload));
 app.use('/api/folders', folderRoutes);
 app.use('/api/messages', messageRoutes);
 
+// Root Route (Health Check)
+app.get("/", (req, res) => {
+  res.send("Backend is Live 🚀");
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Academic Resources Hub API is running' });
