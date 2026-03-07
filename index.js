@@ -1,3 +1,5 @@
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "./config/cloudinary.js";
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -20,27 +22,43 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Ensure uploads directory exists
-import fs from 'fs';
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// import fs from 'fs';
+// const uploadsDir = path.join(__dirname, 'uploads');
+// if (!fs.existsSync(uploadsDir)) {
+//   fs.mkdirSync(uploadsDir, { recursive: true });
+// }
 
 // Configure multer for file uploads (disk storage)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    cb(null, `${timestamp}-${file.originalname}`);
+// const storage = multer.diskStorage({
+//  destination: (req, file, cb) => {
+//   cb(null, uploadsDir);
+// },
+//   filename: (req, file, cb) => {
+//     const timestamp = Date.now();
+//     cb(null, `${timestamp}-${file.originalname}`);
+//   }
+// });
+
+// const upload = multer({ 
+//   storage,
+//   limits: { fileSize: 100 * 1024 * 1024 } 
+//  100MB limit
+// });
+
+// Cloudinary storage configuration
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "academic-resources",
+    resource_type: "raw",
+    allowed_formats: ["pdf","doc","docx","ppt","pptx","zip"]
   }
 });
-
 const upload = multer({ 
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
+
 
 // Middleware
 app.use(cors());
@@ -48,8 +66,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);

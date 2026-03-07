@@ -124,7 +124,8 @@ export default (upload) => {
 
       // Use multer's generated filename (disk storage)
       const fileName = req.file.originalname;
-      const fileUrl = `/uploads/${req.file.filename}`;
+   const fileUrl = req.file.path;
+   const cloudinaryId = req.file.filename;
 
       // Extract file info from multer
       const fileType = req.file.originalname.split('.').pop().toUpperCase();
@@ -135,6 +136,7 @@ export default (upload) => {
         title: title.trim(),
         description: description || '',
         fileUrl,
+        cloudinaryId, 
         fileName,
         fileType,
         fileSize,
