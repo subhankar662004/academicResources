@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import Resource from '../models/Resource.js';
 import Folder from '../models/Folder.js';
+import axios from 'axios';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'academic-hub-secret-key';
 
@@ -122,15 +123,33 @@ export default (upload) => {
         }
       }
 
-      // Use multer's generated filename (disk storage)
-      const fileName = req.file.originalname;
-   const fileUrl = req.file.path;
-   const cloudinaryId = req.file.filename;
-
-      // Extract file info from multer
-      const fileType = req.file.originalname.split('.').pop().toUpperCase();
-      const fileSize = req.file.size;
-      const contentType = req.file.mimetype || 'application/octet-stream';
+      // Extract extension from original filename
+      const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+      const fileName = req.file.originalname; // original filename with extension
+      
+      // Get the cloudinaryId - this is the public_id without extension
+      // The req.file.filename contains the full public_id with format from Cloudinary
+      let cloudinaryId = req.file.filename;
+      
+      // If cloudinaryId includes format (e.g., "1234567890-filename.pdf"), extract just the public_id part
+      if (cloudinaryId && cloudinaryId.includes('.')) {
+        cloudinaryId = cloudinaryId.split('.').slice(0, -1).join('.');
+      }
+      
+      // Construct the proper Cloudinary URL that will serve the original format
+      // Using the public_id and format to construct the URL
+      const format = fileExt;
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
+      
+      // Build proper Cloudinary URL with version and public_id with format
+      // Format: https://res.cloudinary.com/{cloud}/raw/upload/v{version}/{public_id}.{format}
+      const version = req.file.version || '';
+      const versionPath = version ? `v${version}/` : '';
+      const fileUrl = `https://res.cloudinary.com/${cloudName}/raw/upload/${versionPath}${req.file.filename}`;
+      
+      const fileType = req.file.mimetype; // MIME type
+      const fileSize = req.file.size; // file size in bytes
+      const contentType = req.file.mimetype; // content type
 
       const resource = new Resource({
         title: title.trim(),
@@ -163,6 +182,28 @@ export default (upload) => {
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   });
+
+  // Download route - must be defined BEFORE other routes with :id parameter
+  router.get("/download/:id", async (req, res) => {
+  try {
+
+    const resource = await Resource.findById(req.params.id);
+
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+
+    const downloadUrl = resource.fileUrl.replace(
+      "/upload/",
+      "/upload/fl_attachment/"
+    );
+
+    res.redirect(downloadUrl);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
   // Approve resource (admin only)
   router.put('/:id/approve', verifyToken, async (req, res) => {
