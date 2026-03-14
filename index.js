@@ -25,7 +25,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*"
+    origin: [
+      "http://localhost:5173",
+      "https://shubhankar66.netlify.app"
+    ],
+    methods: ["GET","POST"]
   }
 });
 
@@ -122,9 +126,13 @@ io.on("connection", (socket) => {
 });
 
 export const sendNotification = (userId, message) => {
+
+  console.log("Sending notification to:", userId);
+
   io.to(userId).emit("newNotification", {
     message: message
   });
+
 };
 
 // Root Route (Health Check)
@@ -151,7 +159,7 @@ mongoose.connect(MONGODB_URI)
   .catch((err) => {
     console.error('MongoDB connection error:', err);
     // Start server anyway for demo purposes
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT} (without MongoDB)`);
     });
   });
