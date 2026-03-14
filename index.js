@@ -12,6 +12,8 @@ import userRoutes from './routes/users.js';
 import resourceRoutes from './routes/resources.js';
 import folderRoutes from './routes/folders.js';
 import messageRoutes from './routes/messages.js';
+import http from "http";
+import { Server } from "socket.io";
 
 dotenv.config();
 
@@ -20,6 +22,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
 
 // Ensure uploads directory exists
 // import fs from 'fs';
@@ -97,6 +105,28 @@ app.use('/api/resources', resourceRoutes(upload));
 app.use('/api/folders', folderRoutes);
 app.use('/api/messages', messageRoutes);
 
+
+io.on("connection", (socket) => {
+
+  console.log("User connected:", socket.id);
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log("User joined room:", userId);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+
+});
+
+export const sendNotification = (userId, message) => {
+  io.to(userId).emit("newNotification", {
+    message: message
+  });
+};
+
 // Root Route (Health Check)
 app.get("/", (req, res) => {
   res.send("Backend is Live 🚀");
@@ -114,9 +144,9 @@ const MONGODB_URI = process.env.MONGO_URI;
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);

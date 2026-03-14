@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 import Resource from '../models/Resource.js';
 import Folder from '../models/Folder.js';
 import axios from 'axios';
-
+import { sendNotification } from "../index.js";
+import User from "../models/User.js";
 const JWT_SECRET = process.env.JWT_SECRET || 'academic-hub-secret-key';
 
 // Middleware to verify token
@@ -172,6 +173,12 @@ export default (upload) => {
 
       await resource.save();
 
+      const admins = await User.find({ role: "admin" });
+
+admins.forEach(admin => {
+  sendNotification(admin._id.toString(), "New resource uploaded 📚");
+});
+
       // Update folder resource count if folder is provided
       if (folder) {
         await Folder.findByIdAndUpdate(folder, { $inc: { resourceCount: 1 } });
@@ -222,11 +229,14 @@ export default (upload) => {
         { new: true }
       ).populate('uploadedBy', 'name email');
 
-      if (!resource) {
-        return res.status(404).json({ message: 'Resource not found' });
-      }
+     if (!resource) {
+  return res.status(404).json({ message: 'Resource not found' });
+}
 
-      res.json(resource);
+// 🔔 notification send to user
+sendNotification(resource.uploadedBy._id.toString(), "Your resource has been approved 🎉");
+
+res.json(resource);
     } catch (error) {
       res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -248,6 +258,7 @@ export default (upload) => {
       if (!resource) {
         return res.status(404).json({ message: 'Resource not found' });
       }
+      sendNotification(resource.uploadedBy._id.toString(), "Your resource was rejected ❌");
 
       res.json(resource);
     } catch (error) {
