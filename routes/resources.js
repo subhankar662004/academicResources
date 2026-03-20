@@ -146,7 +146,7 @@ export default (upload) => {
       // Format: https://res.cloudinary.com/{cloud}/raw/upload/v{version}/{public_id}.{format}
       const version = req.file.version || '';
       const versionPath = version ? `v${version}/` : '';
-      const fileUrl = `https://res.cloudinary.com/${cloudName}/raw/upload/${versionPath}${req.file.filename}`;
+      const fileUrl = req.file.path;
       
       const fileType = req.file.mimetype; // MIME type
       const fileSize = req.file.size; // file size in bytes
@@ -191,7 +191,7 @@ admins.forEach(admin => {
   });
 
   // Download route - must be defined BEFORE other routes with :id parameter
-  router.get("/download/:id", async (req, res) => {
+router.get("/download/:id", async (req, res) => {
   try {
 
     const resource = await Resource.findById(req.params.id);
@@ -200,12 +200,21 @@ admins.forEach(admin => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
-    const downloadUrl = resource.fileUrl.replace(
-      "/upload/",
-      "/upload/fl_attachment/"
-    );
+    let downloadUrl = resource.fileUrl;
 
-    res.redirect(downloadUrl);
+    if (resource.fileType.startsWith("image/")) {
+      downloadUrl = downloadUrl.replace(
+        "/image/upload/",
+        "/image/upload/fl_attachment/"
+      );
+    } else {
+      downloadUrl = downloadUrl.replace(
+        "/raw/upload/",
+        "/raw/upload/fl_attachment/"
+      );
+    }
+
+    return res.json({ url: downloadUrl });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

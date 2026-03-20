@@ -62,28 +62,16 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const isImage = file.mimetype.startsWith("image/");
-    const isPdf = file.mimetype === "application/pdf";
-    const isDoc = file.mimetype.includes("document") || 
-                  file.mimetype.includes("msword") ||
-                  file.mimetype.includes("officedocument");
-    const isPpt = file.mimetype.includes("presentation") ||
-                  file.mimetype.includes("ms-powerpoint");
-    
-    // Extract original filename without extension
-    const originalNameWithoutExt = file.originalname
-  .replace(/\.[^/.]+$/, "")
-  .replace(/\s+/g, "-");
-    const ext = file.originalname.split('.').pop().toLowerCase();
 
-    // For non-image files, use "raw" resource_type to preserve original format
-    // For images, use "auto" to let Cloudinary optimize
-    const resourceType = isImage ? "auto" : "raw";
+    const originalNameWithoutExt = file.originalname
+      .replace(/\.[^/.]+$/, "")
+      .replace(/\s+/g, "-");
 
    return {
   folder: "academic-resources",
-  resource_type: resourceType,
-  public_id: `${Date.now()}-${originalNameWithoutExt}.${ext}`, // filename + extension
-  flags: isImage ? [] : ["attachment"], // Force download
+  resource_type: isImage ? "image" : "raw",
+  public_id: `${Date.now()}-${originalNameWithoutExt}`,
+  flags: isImage ? [] : ["attachment"],
 };
   },
 });
