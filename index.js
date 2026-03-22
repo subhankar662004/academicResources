@@ -1,9 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "./config/cloudinary.js";
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,7 +17,6 @@ import messageRoutes from './routes/messages.js';
 import http from "http";
 import { Server } from "socket.io";
 
-dotenv.config();
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -62,15 +63,15 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const isImage = file.mimetype.startsWith("image/");
+const ext = file.originalname.split('.').pop();
+const name = file.originalname
+  .replace(/\.[^/.]+$/, "")
+  .replace(/\s+/g, "-");
 
-    const originalNameWithoutExt = file.originalname
-      .replace(/\.[^/.]+$/, "")
-      .replace(/\s+/g, "-");
-
-   return {
+return {
   folder: "academic-resources",
   resource_type: isImage ? "image" : "raw",
-  public_id: `${Date.now()}-${originalNameWithoutExt}`,
+  public_id: `${Date.now()}-${name}.${ext}`,
   flags: isImage ? [] : ["attachment"],
 };
   },
