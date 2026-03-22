@@ -12,7 +12,7 @@ router.post("/submit/:testId", async (req, res) => {
   let score = 0;
 
   questions.forEach(q => {
-    if (answers[q._id] === q.answer) score++;
+   if (answers[q._id.toString()] === q.answer) score++;
   });
 
   const result = new Result({
