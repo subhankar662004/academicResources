@@ -16,7 +16,10 @@ import folderRoutes from './routes/folders.js';
 import messageRoutes from './routes/messages.js';
 import http from "http";
 import { Server } from "socket.io";
-
+import questionRoutes from './routes/questionRoutes.js';
+import testRoutes from './routes/testRoutes.js';
+import adminTestRoutes from './routes/adminTestRoutes.js';
+import testSubmissionRoutes from './routes/testSubmission.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -98,6 +101,10 @@ app.use('/api/resources', resourceRoutes(upload));
 app.use('/api/folders', folderRoutes);
 app.use('/api/messages', messageRoutes);
 
+app.use('/api/questions', questionRoutes);  
+app.use('/api/test', testRoutes);  
+app.use('/api/admin/tests', adminTestRoutes);    
+app.use('/api/test', testSubmissionRoutes);  
 
 io.on("connection", (socket) => {
 
