@@ -17,7 +17,6 @@ import messageRoutes from './routes/messages.js';
 import http from "http";
 import { Server } from "socket.io";
 import questionRoutes from './routes/questionRoutes.js';
-import testRoutes from './routes/testRoutes.js';
 import adminTestRoutes from './routes/adminTestRoutes.js';
 import testSubmissionRoutes from './routes/testSubmission.js';
 
@@ -102,9 +101,8 @@ app.use('/api/folders', folderRoutes);
 app.use('/api/messages', messageRoutes);
 
 app.use('/api/questions', questionRoutes);  
-app.use('/api/test', testRoutes);  
 app.use('/api/admin/tests', adminTestRoutes);    
-app.use('/api/test', testSubmissionRoutes);  
+app.use('/api/testSubmission', testSubmissionRoutes);  
 
 io.on("connection", (socket) => {
 
