@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import Folder from '../models/Folder.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'academic-hub-secret-key';
@@ -36,6 +37,32 @@ router.get('/public', async (req, res) => {
   }
 });
 
+// Get root folders (only outer folders)
+router.get('/root', async (req, res) => {
+  try {
+    const folders = await Folder.aggregate([
+      { $match: { parentFolder: null } },
+      {
+        $lookup: {
+          from: "folders",
+          localField: "_id",
+          foreignField: "parentFolder",
+          as: "subfolders"
+        }
+      },
+      {
+        $addFields: {
+          subfolderCount: { $size: "$subfolders" }
+        }
+      }
+    ]);
+
+    res.json(folders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get all folders
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -64,7 +91,7 @@ router.get('/my-folders', verifyToken, async (req, res) => {
 // Create new folder
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { name, description, isPublic } = req.body;
+    const { name, description, isPublic, parentFolder } = req.body;
     console.log('folder creation request by', req.userId, 'body', req.body);
 
     if (!name || !name.trim()) {
@@ -72,11 +99,12 @@ router.post('/', verifyToken, async (req, res) => {
     }
 
     const folder = new Folder({
-      name: name.trim(),
-      description: description || '',
-      createdBy: req.userId,
-      isPublic: isPublic !== undefined ? isPublic : true
-    });
+  name: name.trim(),
+  description: description || '',
+  createdBy: req.userId,
+  isPublic: isPublic !== undefined ? isPublic : true,
+  parentFolder: parentFolder || null
+});
 
     await folder.save();
     res.status(201).json(folder);
@@ -122,6 +150,34 @@ router.delete('/:id', verifyToken, async (req, res) => {
     res.json({ message: 'Folder deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get subfolders of a folder
+router.get('/parent/:id', async (req, res) => {
+  try {
+
+    const folders = await Folder.aggregate([
+      { $match: { parentFolder: new mongoose.Types.ObjectId(req.params.id) } },
+      {
+        $lookup: {
+          from: "folders",
+          localField: "_id",
+          foreignField: "parentFolder",
+          as: "subfolders"
+        }
+      },
+      {
+        $addFields: {
+          subfolderCount: { $size: "$subfolders" }
+        }
+      }
+    ]);
+
+    res.json(folders);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
