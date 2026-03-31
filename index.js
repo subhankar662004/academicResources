@@ -19,7 +19,7 @@ import { Server } from "socket.io";
 import questionRoutes from './routes/questionRoutes.js';
 import adminTestRoutes from './routes/adminTestRoutes.js';
 import testSubmissionRoutes from './routes/testSubmission.js';
-
+import aiTestRoutes from "./routes/aiTestRoutes.js";
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,6 +103,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/questions', questionRoutes);  
 app.use('/api/admin/tests', adminTestRoutes);    
 app.use('/api/testSubmission', testSubmissionRoutes);  
+app.use("/api/ai-tests", aiTestRoutes);
 
 io.on("connection", (socket) => {
 
